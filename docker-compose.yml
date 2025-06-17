@@ -1,0 +1,55 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: tasks
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  app:
+    build:
+      context: .
+      dockerfile: task-manager-app/Dockerfile
+    depends_on:
+      - postgres
+      - configserver
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    environment:
+      DATASOURCE_URL: jdbc:postgresql://postgres:5432/tasks
+      DATASOURCE_USERNAME: postgres
+      DATASOURCE_PASSWORD: postgres
+      JPA_HIBERNATE_DDL_AUTO: postgres
+      SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      - ./config:/config
+
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  configserver:
+    build:
+      context: .
+      dockerfile: configserver/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod,native
+
+#    healthcheck:
+#      test: [ "CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1" ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 5
+
+volumes:
+  pgdata:

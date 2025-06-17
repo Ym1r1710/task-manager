@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: task-manager
+  config:
+    import: optional:configserver:http://configserver:8000
+    fail-fast: true
+    retry:
+      max-attempts: 10
+      max-interval: 2000
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+server:
+  port: 8080
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/tasks
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
